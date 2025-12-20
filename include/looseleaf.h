@@ -23,53 +23,70 @@ typedef struct ll_Context ll_Context;
 
 // helper data -----------------------------------------------------------------
 
+// Horizontal alignment of two elements
 typedef enum {
   LL_HORIZ_ALIGN_LEFT,
   LL_HORIZ_ALIGN_CENTER,
   LL_HORIZ_ALIGN_RIGHT,
 } ll_HorizAlign;
 
+// Vertical alignment of two elements
 typedef enum {
   LL_VERT_ALIGN_TOP,
   LL_VERT_ALIGN_CENTER,
   LL_VERT_ALIGN_BOTTOM,
 } ll_VertAlign;
 
+// A size in pixels, represented as a pair of a width and height
 typedef struct {
   uint32_t width;
   uint32_t height;
 } ll_Size;
 
+// A two-dimensional vector, represented as a pair of an x and a y value
 typedef struct {
   int32_t x, y;
 } ll_Vec2;
 
 // types of nodes --------------------------------------------------------------
 
-typedef uint32_t ll_NodeHandle;
+typedef struct {
+  uint32_t node_index;
+  // TODO use this to validate that "dirty" nodes are never used
+  // it's probably fine if it wraps back around at the integer limit
+  uint32_t generation;
+} ll_NodeHandle;
 
 // HACK no support for newlines as of now
+// ...or is this a hack?? Maybe it would be cool to have an abstraction that
+// converts a string with newlines to a node using an above/align fold
+
+// Configuration for a `text` node
 typedef struct {
   // Additional spacing between letters (can be negative)
   int16_t letter_spacing;
 } ll_TextConfig;
 
+// Configuration for an `above` node
 typedef struct {
   ll_HorizAlign align_h;
   ll_Vec2 offset;
 } ll_AboveConfig;
 
+// Configuration for a `beside` node
 typedef struct {
   ll_VertAlign align_v;
   ll_Vec2 offset;
 } ll_BesideConfig;
 
+// Configuration for an `overlay` node
 typedef struct {
   ll_HorizAlign align_h;
   ll_VertAlign align_v;
   ll_Vec2 offset;
 } ll_OverlayConfig;
 
+// Configuration for a `move_pinhole` node
 typedef struct {
   ll_Vec2 offset;
 } ll_MovePinholeConfig;
@@ -97,7 +114,7 @@ typedef struct ll__Node {
     } children;
   } data;
 
-  // A union describing the optional configuration of a node.
+  // A union describing the optional configuration of a node
   union Config {
     ll_TextConfig text_config;
     ll_AboveConfig above_config;
@@ -139,11 +156,12 @@ typedef enum {
   LL_RENDER_DATA_TAG_TEXT,
 } ll_RenderDataTag;
 
-// Data for rendering an
+// Data passed to the renderer for drawing an image
 typedef struct {
   void* imageData;
 } ll_ImageRenderData;
 
+// Data passed to the renderer for drawing text
 typedef struct {
   const char* text;
 } ll_TextRenderData;
@@ -258,29 +276,10 @@ ll_Size ll__measure_image(LL_IMAGE_TYPE* image);
 
 ll_Context* ll_init(char* arena_mem, size_t arena_capacity) {
   ll__Arena arena = (ll__Arena){
-      .capacity = arena_capacity,
-      .mem = arena_mem,
-  };
+  .capacity = arena_capacity,
+  .mem = arena_mem,
+};
 
-  return (ll_Context) { .arena = arena, };
-}
-
-
-// EXAMPLE =====================================================================
-
-#define SIZE 4096
-
-int main() {
-  char arena[SIZE];
-  ll_Context ctx = ll_init(arena, SIZE);
-  ll_begin(&ctx);
-
-  ll_NodeHandle im = ll_image(NULL, {.width = 1, .height = 1});
-  ll_NodeHandle over = ll_overlay(
-      {.align_h = LL_HORIZ_ALIGN_LEFT},
-      ll_text({.letter_spacing = 3}, "hello world"),
-      ll_beside({.align_v = LL_VERT_ALIGN_CENTER}, im, im)
-  );
-
-  ll_RenderCommandArray cmds = ll_gen_commands(over);
+  return NULL;
+  /* return (ll_Context) { .arena = arena, }; */
 }

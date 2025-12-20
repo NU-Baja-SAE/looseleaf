@@ -1,2 +1,4 @@
 .ccls-cache/
 .direnv/
+out/
+compile_commands.json

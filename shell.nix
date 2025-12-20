@@ -1,4 +1,4 @@
 {pkgs ? import <nixpkgs> {}}:
 pkgs.mkShell {
-  buildInputs = with pkgs; [ccls gnumake];
+  buildInputs = with pkgs; [ccls gnumake bear ];
 }
