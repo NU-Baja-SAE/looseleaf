@@ -7,13 +7,16 @@ int main() {
   ll_Context* ctx = ll_init(arena, SIZE);
   ll_begin(ctx);
 
-  ll_NodeHandle im = ll_image(NULL, {.width = 1, .height = 1});
+  ll_NodeHandle im = ll_image(NULL, (ll_Size){
+    .width = 1,
+    .height = 1
+  });
 
   // nesting multiple node combinators
   ll_NodeHandle overlay_demo = ll_overlay(
-    {.align_h = LL_HORIZ_ALIGN_LEFT},
-    ll_text({.letter_spacing = 3}, "hello world"),
-    ll_beside({.align_v = LL_VERT_ALIGN_CENTER}, im, im)
+    (ll_OverlayConfig){.align_h = LL_HORIZ_ALIGN_LEFT},
+    ll_text((ll_TextConfig){.letter_spacing = 3}, "hello world"),
+    ll_beside((ll_BesideConfig){.align_v = LL_VERT_ALIGN_CENTER}, im, im)
   );
 
   // will draw something like this...

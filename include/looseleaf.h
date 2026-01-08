@@ -8,11 +8,6 @@
 //   /  HEADER  /
 // -+----------+----------------------------------------------------------------
 
-// TODO find a better place for this
-#ifndef LL_IMAGE_TYPE
-#define LL_IMAGE_TYPE void
-#endif
-
 // initialization stage ========================================================
 // --> create the memory arena and context
 
@@ -87,9 +82,9 @@ typedef struct {
 } ll_OverlayConfig;
 
 // Configuration for a `move_pinhole` node
-typedef struct {
-  ll_Vec2 offset;
-} ll_MovePinholeConfig;
+// typedef struct {
+//   ll_Vec2 offset;
+// } ll_MovePinholeConfig;
 
 // the node struct -------------------------------------------------------------
 
@@ -98,9 +93,9 @@ typedef struct ll__Node {
   union Contents {
     // The data of this node, if it is an image node
     struct ImageData {
-      LL_IMAGE_TYPE* image_data;
-      ll_Size image_size;
-    };
+      void* data;
+      ll_Size size;
+    } image_data;
     // The text contents of this node, if it is a text node
     const char* text_data;
     // the single child of this node, if it is a transformation
@@ -120,7 +115,7 @@ typedef struct ll__Node {
     ll_AboveConfig above_config;
     ll_BesideConfig beside_config;
     ll_OverlayConfig overlay_config;
-    ll_MovePinholeConfig move_pinhole_config;
+    // ll_MovePinholeConfig move_pinhole_config;
   } config;
 
   // TODO consolidate the two unions above into one?
@@ -132,8 +127,8 @@ typedef struct ll__Node {
     LL__NODE_TYPE_ABOVE,
     LL__NODE_TYPE_BESIDE,
     LL__NODE_TYPE_OVERLAY,
-    LL__NODE_TYPE_MOVE_PINHOLE,
-    LL__NODE_TYPE_RESET_PINHOLE,
+    // LL__NODE_TYPE_MOVE_PINHOLE,
+    // LL__NODE_TYPE_RESET_PINHOLE,
   } tag;
 } ll__Node;
 
@@ -214,10 +209,10 @@ struct ll_Context {
 
 // Configure the function looseleaf uses to measure text.
 // Required before creating a context.
-void ll_set_text_measurement_fn(ll_Size (*text_measurement_fn)(const char* text, uint16_t letter_spacing));
+void ll_configure_text_measurement_fn(ll_Size (*text_measurement_fn)(const char* text, uint16_t letter_spacing));
 // Configure the function looseleaf uses to measure images.
 // Required before creating a context.
-void ll_set_image_measurement_fn(ll_Size (*image_measurement_fn)(LL_IMAGE_TYPE* image));
+void ll_configure_image_measurement_fn(ll_Size (*image_measurement_fn)(void* image));
 // Configure the maximum number of nodes that can be "in flight" at a given time
 void ll_configure_max_nodes(uint32_t max_nodes);
 // Return the minimum size of an arena used to initialize the looseleaf context
@@ -234,7 +229,7 @@ void ll_begin(ll_Context* ctx);
 // DESIGN: data comes after configuration, in case function calls are nested
 
 // Allocate a leaf representing an image, with data defined by LL_IMAGE_TYPE
-ll_NodeHandle ll_image(LL_IMAGE_TYPE* image_data, ll_Size image_size);
+ll_NodeHandle ll_image(void* image_data, ll_Size image_size);
 // Allocate a leaf represeting a string of text
 ll_NodeHandle ll_text(ll_TextConfig conf, const char* text);
 // Allocate a binary node that renders the first node above the second
@@ -244,9 +239,9 @@ ll_NodeHandle ll_beside(ll_BesideConfig conf, ll_NodeHandle left, ll_NodeHandle 
 // Allocate a binary node that renders the first node on top of the second
 ll_NodeHandle ll_overlay(ll_OverlayConfig conf, ll_NodeHandle over, ll_NodeHandle under);
 // Allocate a unary node that moves a node's pinhole as defined by `conf`
-ll_NodeHandle ll_move_pinhole(ll_MovePinholeConfig conf, ll_NodeHandle node);
+// ll_NodeHandle ll_move_pinhole(ll_MovePinholeConfig conf, ll_NodeHandle node);
 // Allocate a unary node that resets a node's pinhole to its original position
-ll_NodeHandle ll_reset_pinhole(ll_NodeHandle node);
+// ll_NodeHandle ll_reset_pinhole(ll_NodeHandle node);
 
 // Generate an iterable array of render commands from an ll_NodeHandle
 ll_RenderCommandArray ll_gen_commands(ll_NodeHandle root);
@@ -270,15 +265,15 @@ uint32_t ll__max_nodes = 4096;
 ll_Size ll__measure_text(const char* text, uint16_t letter_spacing);
 
 // Provided an instance of LL_IMAGE_TYPE, return the pixel size of that image
-ll_Size ll__measure_image(LL_IMAGE_TYPE* image);
+ll_Size ll__measure_image(void* image);
 
 // public functions ============================================================
 
 ll_Context* ll_init(char* arena_mem, size_t arena_capacity) {
   ll__Arena arena = (ll__Arena){
-  .capacity = arena_capacity,
-  .mem = arena_mem,
-};
+    .capacity = arena_capacity,
+    .mem = arena_mem,
+  };
 
   return NULL;
   /* return (ll_Context) { .arena = arena, }; */
