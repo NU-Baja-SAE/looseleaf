@@ -215,18 +215,34 @@ void ll_configure_text_measurement_fn(ll_Size (*text_measurement_fn)(const char*
 void ll_configure_image_measurement_fn(ll_Size (*image_measurement_fn)(void* image));
 // Configure the maximum number of nodes that can be "in flight" at a given time
 void ll_configure_max_nodes(uint32_t max_nodes);
-// Return the minimum size of an arena used to initialize the looseleaf context
+
+// Get the minimum arena size required for `num_nodes` nodes
+uint64_t ll_min_arena_size(uint32_t num_nodes);
+
+// Return the minimum size of an arena used to initialize the looseleaf context,
+// based on the configured maximum node count
 uint64_t ll_min_arena_size(void);
-// Initialize a looseleaf context from a memory arena
-// TODO error if measurement functions aren't set up properly
-ll_Context* ll_init(char* arena_mem, size_t arena_capacity);
+// Initialize a looseleaf context from a memory arena and measurement functions
+// - `arena_mem` is a byte array that will be used for the looseleaf memory arena
+// - `arena_capacity` is the capacity of that array in bytes
+// - `image_measurement_fn` is a function for measuring the size of an image,
+//   in pixels.
+// - `image_measurement_fn` is a function for measuring the size of a single-
+//   line block of text, in pixels.
+ll_Context* ll_init_context(
+  char* arena_mem,
+  size_t arena_capacity,
+  ll_Size (*image_measurement_fn)(void* image),
+  ll_Size (*text_measurement_fn)(const char* text, uint16_t letter_spacing),
+);
 
 // per-frame recording...
 
-// Clear the looseleaf context and set it up for recording
-void ll_begin(ll_Context* ctx);
+// Open the looseleaf context and set it up for recording
+void ll_open(ll_Context* ctx);
 
-// DESIGN: data comes after configuration, in case function calls are nested
+// STYLE: data comes after configuration, in case function calls are nested.
+// Makes it easier to tell where configuration comes from
 
 // Allocate a leaf representing an image, with data defined by LL_IMAGE_TYPE
 ll_NodeHandle ll_image(void* image_data, ll_Size image_size);
@@ -245,6 +261,9 @@ ll_NodeHandle ll_overlay(ll_OverlayConfig conf, ll_NodeHandle over, ll_NodeHandl
 
 // Generate an iterable array of render commands from an ll_NodeHandle
 ll_RenderCommandArray ll_gen_commands(ll_NodeHandle root);
+
+// Close the looseleaf context, flushing all allocated nodes
+void ll_close(ll_Context* ctx);
 
 
 //    +------------------+
@@ -269,7 +288,12 @@ ll_Size ll__measure_image(void* image);
 
 // public functions ============================================================
 
-ll_Context* ll_init(char* arena_mem, size_t arena_capacity) {
+ll_Context* ll_init_context(
+  char* arena_mem,
+  size_t arena_capacity,
+  ll_Size (*image_measurement_fn)(void* image),
+  ll_Size (*text_measurement_fn)(const char* text, uint16_t letter_spacing),
+) {
   ll__Arena arena = (ll__Arena){
     .capacity = arena_capacity,
     .mem = arena_mem,
